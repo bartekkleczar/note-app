@@ -3,11 +3,7 @@ package com.example.note.navigation
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.List
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -16,10 +12,15 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
@@ -32,6 +33,7 @@ import com.example.note.NoteViewModel
 import com.example.note.Composables.*
 import com.example.note.Constraints.*
 import com.example.note.MainActivity
+import com.example.note.db.Note
 
 @Composable
 fun Navigation(noteViewModel: NoteViewModel) {
@@ -41,16 +43,21 @@ fun Navigation(noteViewModel: NoteViewModel) {
             MainScreen(navController, noteViewModel)
         }
         composable(
-            route = Screen.DetailScreen.route + "/{name}",
+            route = Screen.DetailScreen.route + "/{title}" + "/{content}",
             arguments = listOf(
-                navArgument("name") {
+                navArgument("title") {
                     type = NavType.StringType
-                    defaultValue = "Err"
+                    defaultValue = ""
+                    nullable = true
+                },
+                navArgument("content") {
+                    type = NavType.StringType
+                    defaultValue = ""
                     nullable = true
                 }
             )
         ) { entry ->
-            DetailScreen(name = entry.arguments?.getString("name"), navController)
+            DetailScreen(title = entry.arguments?.getString("title"), content = entry.arguments?.getString("content"), navController, noteViewModel)
         }
     }
 }
@@ -76,7 +83,7 @@ fun MainScreen(navController: NavController, noteViewModel: NoteViewModel) {
                                 selected = selectedItemIndex == index,
                                 onClick = {
                                     selectedItemIndex = index
-                                    navController.navigate(Screen.DetailScreen.withArgs(" "))
+                                    navController.navigate(Screen.DetailScreen.withArgs(" ", " "))
                                 },
                                 label = {
                                     Text(text = item.title)
@@ -111,7 +118,7 @@ fun MainScreen(navController: NavController, noteViewModel: NoteViewModel) {
                 .layoutId("column")
                 .padding(start = pad, top = pad, end = pad),
             noteViewModel = noteViewModel,
-            navController
+            navController = navController
         )
     }
 }
@@ -119,7 +126,46 @@ fun MainScreen(navController: NavController, noteViewModel: NoteViewModel) {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(name: String?, navController: NavController) {
+fun DetailScreen(title: String?, content: String?, navController: NavController, noteViewModel: NoteViewModel) {
+    val textFieldColors = TextFieldDefaults.textFieldColors(
+        textColor = Color.Black,
+        containerColor = Color.Transparent,
+        disabledTextColor = Color.Black,
+        cursorColor = Color.Gray,
+        errorCursorColor = Color.Gray,
+        selectionColors = TextSelectionColors(handleColor = Color(30,144,255), backgroundColor = Color(0,191,255)),
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        errorIndicatorColor = Color.Black,
+        disabledIndicatorColor = Color.Black,
+        focusedLeadingIconColor = Color.Black,
+        unfocusedLeadingIconColor = Color.Black,
+        disabledLeadingIconColor = Color.Black,
+        errorLeadingIconColor = Color.Black,
+        focusedTrailingIconColor = Color.Black,
+        unfocusedTrailingIconColor = Color.Black,
+        disabledTrailingIconColor = Color.Black,
+        errorTrailingIconColor = Color.Black,
+        focusedLabelColor = Color.Black,
+        unfocusedLabelColor = Color.Black,
+        disabledLabelColor = Color.Black,
+        errorLabelColor = Color.Black,
+        placeholderColor = Color.Black,
+        disabledPlaceholderColor = Color.Black,
+        focusedSupportingTextColor = Color.Black,
+        unfocusedSupportingTextColor = Color.Black,
+        disabledSupportingTextColor = Color.Black,
+        errorSupportingTextColor = Color.Black
+    )
+
+    var title by remember {
+        mutableStateOf(title)
+    }
+
+    var content by remember {
+        mutableStateOf(content)
+    }
+
     val items = MainActivity.items
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(1)
@@ -136,6 +182,15 @@ fun DetailScreen(name: String?, navController: NavController) {
                             selected = selectedItemIndex == index,
                             onClick = {
                                 selectedItemIndex = index
+
+                                val untitled = MainActivity.untitledCount
+                                if(title == null || title == " " ) {
+                                    title = "Untitled $untitled"
+                                    MainActivity.untitledCount++
+                                }
+                                noteViewModel.insert(Note(title ?: "Untitled $untitled", content ?: ""))
+
+
                                 when (selectedItemIndex) {
                                     0 -> navController.navigate(Screen.MainScreen.route)
                                     1 -> navController.navigate(Screen.DetailScreen.withArgs(" "))
@@ -163,11 +218,21 @@ fun DetailScreen(name: String?, navController: NavController) {
         }
     }
 
-    val pad = 15.dp
-    Title(
-        text = name ?: "Err",
-        modifier = Modifier
-            .padding(start = pad, top = pad, end = pad)
-            .layoutId("title")
-    )
+    TextField(
+        modifier = Modifier.padding(top = 10.dp),
+        value = title ?: "Err",
+        colors = textFieldColors,
+        textStyle = TextStyle(fontSize = 35.sp),
+        onValueChange = {
+            title = it
+        })
+
+    TextField(
+        modifier = Modifier.padding(top = 70.dp),
+        value = content ?: "Err",
+        colors = textFieldColors,
+        textStyle = TextStyle(fontSize = 25.sp),
+        onValueChange = {
+            content = it
+        })
 }

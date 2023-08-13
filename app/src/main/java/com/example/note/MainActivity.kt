@@ -3,24 +3,17 @@ package com.example.note
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.List
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModelProvider
 import com.example.note.db.NoteDatabase
 import com.example.note.db.NoteRepository
 import com.example.note.navigation.NavItem
 import com.example.note.navigation.Navigation
-import com.example.note.ui.theme.NoteTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -36,7 +29,10 @@ class MainActivity : ComponentActivity() {
             Navigation(noteViewModel)
         }
     }
+
     companion object {
+        var untitledCount = 0
+
         val items = listOf(
             NavItem(
                 title = "List",
@@ -48,6 +44,15 @@ class MainActivity : ComponentActivity() {
                 selectedIcon = Icons.Filled.Add,
                 unselectedIcon = Icons.Outlined.Add
             )
+        )
+        val colors = mapOf(
+            "OrangeRed" to Color(255,69,0),
+            "Orange" to Color(255,165,0),
+            "DarkOrange" to Color(255,140,0),
+
+            "DeepSkyBlue" to Color(0,191,255),
+            "DodgerBlue" to Color(30,144,255)
+
         )
     }
 }

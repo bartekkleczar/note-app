@@ -1,4 +1,4 @@
-package com.example.note.Constraints
+package com.example.note.constraints
 
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintSet

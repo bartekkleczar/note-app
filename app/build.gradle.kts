@@ -73,6 +73,9 @@ dependencies {
     //Constraints
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha11")
 
+    //Shared Preferences
+    implementation("androidx.preference:preference-ktx:1.2.1")
+
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.2")

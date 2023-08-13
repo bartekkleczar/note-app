@@ -26,12 +26,11 @@ class MainActivity : ComponentActivity() {
         val factory = NoteViewModelFactory(repository)
         noteViewModel = ViewModelProvider(this, factory)[NoteViewModel::class.java]
         setContent {
-            Navigation(noteViewModel)
+            Navigation(noteViewModel, this)
         }
     }
-
     companion object {
-        var untitledCount = 0
+        const val untitledCount = "UNTITLED_COUNT"
 
         val items = listOf(
             NavItem(
@@ -44,15 +43,6 @@ class MainActivity : ComponentActivity() {
                 selectedIcon = Icons.Filled.Add,
                 unselectedIcon = Icons.Outlined.Add
             )
-        )
-        val colors = mapOf(
-            "OrangeRed" to Color(255,69,0),
-            "Orange" to Color(255,165,0),
-            "DarkOrange" to Color(255,140,0),
-
-            "DeepSkyBlue" to Color(0,191,255),
-            "DodgerBlue" to Color(30,144,255)
-
         )
     }
 }

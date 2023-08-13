@@ -1,6 +1,8 @@
 package com.example.note.navigation
 
 import android.annotation.SuppressLint
+import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -9,16 +11,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -30,13 +37,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
 import com.example.note.NoteViewModel
-import com.example.note.Composables.*
-import com.example.note.Constraints.*
+import com.example.note.composables.*
+import com.example.note.constraints.*
 import com.example.note.MainActivity
 import com.example.note.db.Note
+import com.example.note.sharedPreferences.SharedPreferencesManager
+import com.example.note.ui.theme.Grey
+import com.example.note.ui.theme.GreyLight
+import com.example.note.ui.theme.Sec_MintGreen
+import com.example.note.ui.theme.Ter_Yellow
 
 @Composable
-fun Navigation(noteViewModel: NoteViewModel) {
+fun Navigation(noteViewModel: NoteViewModel, context: Context) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Screen.MainScreen.route) {
         composable(route = Screen.MainScreen.route) {
@@ -48,16 +60,22 @@ fun Navigation(noteViewModel: NoteViewModel) {
                 navArgument("title") {
                     type = NavType.StringType
                     defaultValue = ""
-                    nullable = true
+                    nullable = false
                 },
                 navArgument("content") {
                     type = NavType.StringType
                     defaultValue = ""
-                    nullable = true
+                    nullable = false
                 }
             )
         ) { entry ->
-            DetailScreen(title = entry.arguments?.getString("title"), content = entry.arguments?.getString("content"), navController, noteViewModel)
+            DetailScreen(
+                title = entry.arguments?.getString("title"),
+                content = entry.arguments?.getString("content"),
+                navController,
+                noteViewModel,
+                context
+            )
         }
     }
 }
@@ -73,13 +91,22 @@ fun MainScreen(navController: NavController, noteViewModel: NoteViewModel) {
     ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.layoutId("surface"),
-            color = MaterialTheme.colorScheme.background
+            contentColor = GreyLight
         ) {
             Scaffold(
                 bottomBar = {
-                    NavigationBar {
+                    NavigationBar(
+                        containerColor = Sec_MintGreen
+                    ) {
                         items.forEachIndexed { index, item ->
                             NavigationBarItem(
+                                colors = NavigationBarItemDefaults.colors(
+                                     selectedIconColor = Color.Black,
+                                     selectedTextColor = Color.Black,
+                                     indicatorColor = Grey,
+                                     unselectedIconColor= Grey,
+                                     unselectedTextColor= Grey
+                                ),
                                 selected = selectedItemIndex == index,
                                 onClick = {
                                     selectedItemIndex = index
@@ -126,14 +153,23 @@ fun MainScreen(navController: NavController, noteViewModel: NoteViewModel) {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(title: String?, content: String?, navController: NavController, noteViewModel: NoteViewModel) {
+fun DetailScreen(
+    title: String?,
+    content: String?,
+    navController: NavController,
+    noteViewModel: NoteViewModel,
+    context: Context
+) {
     val textFieldColors = TextFieldDefaults.textFieldColors(
         textColor = Color.Black,
         containerColor = Color.Transparent,
         disabledTextColor = Color.Black,
         cursorColor = Color.Gray,
         errorCursorColor = Color.Gray,
-        selectionColors = TextSelectionColors(handleColor = Color(30,144,255), backgroundColor = Color(0,191,255)),
+        selectionColors = TextSelectionColors(
+            handleColor = Color(30, 144, 255),
+            backgroundColor = Color(0, 191, 255)
+        ),
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
         errorIndicatorColor = Color.Black,
@@ -158,6 +194,10 @@ fun DetailScreen(title: String?, content: String?, navController: NavController,
         errorSupportingTextColor = Color.Black
     )
 
+    val sharedPreferencesManager = SharedPreferencesManager(context)
+
+    val oldTitle = title
+
     var title by remember {
         mutableStateOf(title)
     }
@@ -176,21 +216,56 @@ fun DetailScreen(title: String?, content: String?, navController: NavController,
     ) {
         Scaffold(
             bottomBar = {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = Sec_MintGreen
+                ){
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.Black,
+                                selectedTextColor = Color.Black,
+                                indicatorColor = Grey,
+                                unselectedIconColor= Grey,
+                                unselectedTextColor= Grey
+                            ),
                             selected = selectedItemIndex == index,
                             onClick = {
                                 selectedItemIndex = index
 
-                                val untitled = MainActivity.untitledCount
-                                if(title == null || title == " " ) {
+                                val untitled = sharedPreferencesManager.getInt(MainActivity.untitledCount, 0)
+                                if (title == null || title == " ") {
                                     title = "Untitled $untitled"
-                                    MainActivity.untitledCount++
+                                    sharedPreferencesManager.saveInt(
+                                        MainActivity.untitledCount,
+                                        untitled + 1
+                                    )
                                 }
-                                noteViewModel.insert(Note(title ?: "Untitled $untitled", content ?: ""))
+                                when (oldTitle) {
+                                    title -> {
+                                        when (oldTitle) {
+                                            "" -> {
+                                                noteViewModel.insert(
+                                                    Note(title ?: "Untitled $untitled", content ?: "")
+                                                )
+                                            }
 
+                                            else -> {
+                                                noteViewModel.update(
+                                                    Note(title ?: "Untitled $untitled", content ?: "")
+                                                )
+                                            }
+                                        }
+                                    }
 
+                                    else -> {
+                                        noteViewModel.insert(
+                                            Note(title ?: "Untitled $untitled", content ?: "")
+                                        )
+                                        oldTitle?.let {
+                                            noteViewModel.delete(Note(oldTitle, content ?: ""))
+                                        }
+                                    }
+                                }
                                 when (selectedItemIndex) {
                                     0 -> navController.navigate(Screen.MainScreen.route)
                                     1 -> navController.navigate(Screen.DetailScreen.withArgs(" "))
@@ -212,12 +287,18 @@ fun DetailScreen(title: String?, content: String?, navController: NavController,
                     }
                 }
             }
-        )
-        {
-
-        }
+        ){}
     }
-
+    var inputTitle by remember { mutableStateOf("Input Title") }
+    if(inputTitle != "" || inputTitle != " "){
+        inputTitle = ""
+    }
+    Text(
+        text = inputTitle,
+        modifier = Modifier.padding(top = 25.dp, start = 15.dp),
+        fontSize = 35.sp, fontWeight = FontWeight.Bold,
+        color = Color.Black
+        )
     TextField(
         modifier = Modifier.padding(top = 10.dp),
         value = title ?: "Err",
@@ -225,8 +306,24 @@ fun DetailScreen(title: String?, content: String?, navController: NavController,
         textStyle = TextStyle(fontSize = 35.sp),
         onValueChange = {
             title = it
-        })
+            inputTitle = when(it){
+                "" -> "Input Title"
+                " " -> "Input Title"
+                else -> ""
+            }
+        }
+    )
 
+    var inputContent by remember { mutableStateOf("Input Content") }
+    if(inputContent != "" || inputContent != " "){
+        inputContent = ""
+    }
+    Text(
+        text = inputContent,
+        modifier = Modifier.padding(top = 85.dp, start = 15.dp),
+        fontSize = 25.sp, fontWeight = FontWeight.Bold,
+        color = Color.Black
+    )
     TextField(
         modifier = Modifier.padding(top = 70.dp),
         value = content ?: "Err",
@@ -234,5 +331,11 @@ fun DetailScreen(title: String?, content: String?, navController: NavController,
         textStyle = TextStyle(fontSize = 25.sp),
         onValueChange = {
             content = it
-        })
+            inputContent = when(it){
+                ("") -> "Input Title"
+                (" ") -> "Input Title"
+                else -> ""
+            }
+        }
+    )
 }

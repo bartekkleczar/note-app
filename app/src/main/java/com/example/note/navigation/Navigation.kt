@@ -289,53 +289,28 @@ fun DetailScreen(
             }
         ){}
     }
-    var inputTitle by remember { mutableStateOf("Input Title") }
-    if(inputTitle != "" || inputTitle != " "){
-        inputTitle = ""
-    }
-    Text(
-        text = inputTitle,
-        modifier = Modifier.padding(top = 25.dp, start = 15.dp),
-        fontSize = 35.sp, fontWeight = FontWeight.Bold,
-        color = Color.Black
-        )
     TextField(
         modifier = Modifier.padding(top = 10.dp),
         value = title ?: "Err",
         colors = textFieldColors,
         textStyle = TextStyle(fontSize = 35.sp),
+        label = {
+          Text(text = "Input Title", fontSize = 15.sp)
+        },
         onValueChange = {
             title = it
-            inputTitle = when(it){
-                "" -> "Input Title"
-                " " -> "Input Title"
-                else -> ""
-            }
         }
-    )
-
-    var inputContent by remember { mutableStateOf("Input Content") }
-    if(inputContent != "" || inputContent != " "){
-        inputContent = ""
-    }
-    Text(
-        text = inputContent,
-        modifier = Modifier.padding(top = 85.dp, start = 15.dp),
-        fontSize = 25.sp, fontWeight = FontWeight.Bold,
-        color = Color.Black
     )
     TextField(
         modifier = Modifier.padding(top = 70.dp),
         value = content ?: "Err",
         colors = textFieldColors,
         textStyle = TextStyle(fontSize = 25.sp),
+        label = {
+            Text(text = "Input Content", fontSize = 15.sp)
+        },
         onValueChange = {
             content = it
-            inputContent = when(it){
-                ("") -> "Input Title"
-                (" ") -> "Input Title"
-                else -> ""
-            }
         }
     )
 }

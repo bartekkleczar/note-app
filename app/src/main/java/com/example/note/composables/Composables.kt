@@ -82,7 +82,7 @@ fun Notes(modifier: Modifier, noteViewModel: NoteViewModel, navController: NavCo
                         )
                         Text(
                             text = preview(item.content),
-                            fontSize = 20.sp,
+                            fontSize = 15.sp,
                             color = Color.Black,
                             modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)
                         )
